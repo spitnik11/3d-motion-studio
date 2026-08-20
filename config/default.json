@@ -11,7 +11,7 @@
     "url": "http://127.0.0.1:3200"
   },
   "blender": {
-    "executable": null,
+    "executable": "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe",
     "requiredVersion": "5.2"
   },
   "capabilities": {
