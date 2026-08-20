@@ -103,11 +103,21 @@ def op_listArmatures(_):
     return {"armatures": [o.name for o in bpy.data.objects if o.type == "ARMATURE"]}
 
 
+def op_listBones(cmd):
+    arm = _obj(cmd["armature"])
+    return {"armature": cmd["armature"], "bones": [b.name for b in arm.data.bones]}
+
+
 def op_importModel(cmd):
     path = cmd["path"]
     lower = path.lower()
-    if lower.endswith((".glb", ".gltf")):
-        bpy.ops.import_scene.gltf(filepath=path)
+    if lower.endswith((".glb", ".gltf", ".vrm")):
+        # VRM is glTF-binary; native importer loads mesh+armature. The VRM add-on,
+        # when installed, additionally maps the humanoid bones + spring bones.
+        try:
+            bpy.ops.import_scene.vrm(filepath=path)  # VRM add-on if present
+        except (AttributeError, RuntimeError):
+            bpy.ops.import_scene.gltf(filepath=path)
     elif lower.endswith(".fbx"):
         bpy.ops.import_scene.fbx(filepath=path)
     elif lower.endswith(".obj"):

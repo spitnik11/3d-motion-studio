@@ -148,6 +148,32 @@ def _quaternius():
     return m
 
 
+def _vroid():
+    # Real VRoid Studio export naming (what the Blender VRM add-on produces).
+    m = {
+        "root": "Root", "pelvis": "J_Bip_C_Hips",
+        "spine.lower": "J_Bip_C_Spine", "spine.middle": "J_Bip_C_Chest",
+        "spine.upper": "J_Bip_C_UpperChest",
+        "neck": "J_Bip_C_Neck", "head": "J_Bip_C_Head",
+    }
+    S = {"left": "L", "right": "R"}
+    fmap = {"thumb": "Thumb", "index": "Index", "middle": "Middle", "ring": "Ring", "pinky": "Little"}
+    for s in SIDES:
+        x = S[s]
+        m[f"shoulder.{s}"] = f"J_Bip_{x}_Shoulder"
+        m[f"arm.{s}.upper"] = f"J_Bip_{x}_UpperArm"
+        m[f"arm.{s}.lower"] = f"J_Bip_{x}_LowerArm"
+        m[f"hand.{s}"] = f"J_Bip_{x}_Hand"
+        m[f"leg.{s}.upper"] = f"J_Bip_{x}_UpperLeg"
+        m[f"leg.{s}.lower"] = f"J_Bip_{x}_LowerLeg"
+        m[f"foot.{s}"] = f"J_Bip_{x}_Foot"
+        m[f"toe.{s}"] = f"J_Bip_{x}_ToeBase"
+        for f in FINGERS:
+            for n in FINGER_SEGS:
+                m[canonical_finger(s, f, n)] = f"J_Bip_{x}_{fmap[f]}{n}"
+    return m
+
+
 def _mpfb():
     # MakeHuman/MPFB "Default" rig, approximate.
     m = {
@@ -180,7 +206,8 @@ def _canonical():
 
 FAMILIES = {
     "canonical": _canonical(),
-    "vrm": _vrm(),
+    "vrm": _vrm(),          # VRM humanoid-metadata names (leftUpperArm, …)
+    "vroid": _vroid(),      # real VRoid export names (J_Bip_L_UpperArm, …)
     "rigify": _rigify(),
     "quaternius": _quaternius(),
     "mixamo": _mixamo(),
