@@ -82,6 +82,32 @@ def export_posebundle(bridge, *, blend_in: str, bundle_dir: str, frames,
     return manifest
 
 
+def read_posebundle(bundle_dir: str) -> dict:
+    """Load a bundle with NO Blender: manifest + sidecars + per-frame file paths.
+
+    This is what a consumer (Frame Motion Studio) uses. Pure stdlib.
+    """
+    bundle = Path(bundle_dir)
+    m = json.loads((bundle / "manifest.json").read_text())
+    sidecars = {name: json.loads((bundle / f"{name}.json").read_text())
+                for name in ("camera", "scene", "actors", "contacts")
+                if (bundle / f"{name}.json").is_file()}
+    indices = list(m.get("actorIndices", {}).values())
+    frames = []
+    for f in m.get("frames", []):
+        fd = bundle / f"frame_{f:04d}"
+        frames.append({
+            "frame": f,
+            "dir": str(fd),
+            "preview": str(fd / "preview.png"),
+            "passes": str(fd / "passes.exr"),
+            "silhouette": str(fd / "silhouette.png"),
+            "masks": {idx: str(fd / f"actor_{idx}_mask.png") for idx in indices},
+            "pose": json.loads((fd / "pose.json").read_text()) if (fd / "pose.json").is_file() else None,
+        })
+    return {"manifest": m, "sidecars": sidecars, "frames": frames}
+
+
 def validate_posebundle(bundle_dir: str) -> tuple[bool, list[str]]:
     """Blender-free completeness/format check. Returns (ok, errors)."""
     bundle = Path(bundle_dir)

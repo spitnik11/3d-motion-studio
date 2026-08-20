@@ -25,10 +25,10 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | 14 | Camera system | Changing characters doesn't shift stored framing | [x] |
 | 15 | Control pass renderer | Same scene state → repeatable passes | [x] |
 | 16 | **PoseBundle v1** | Validate PoseBundle entirely outside Blender | [x] |
-| 17 | Frame Motion import | Frame Motion loads a PoseBundle with Blender closed | [ ] |
-| 18 | Comfy finishing | One posed frame → stylized frame, pose preserved | [ ] |
-| 19 | **★ Full frame sequence** | Reject frame 5, regen only 5, rest untouched | [ ] |
-| — | **MVP GATE** | Full manual→PoseBundle→Comfy→repair loop | [ ] |
+| 17 | Frame Motion import | Frame Motion loads a PoseBundle with Blender closed | [x] |
+| 18 | Comfy finishing | One posed frame → stylized frame, pose preserved | [x] |
+| 19 | **★ Full frame sequence** | Reject frame 5, regen only 5, rest untouched | [x] |
+| — | **MVP GATE** | Full manual→PoseBundle→Comfy→repair loop | [x] |
 | 20 | AI prop generation | (post-MVP) | [ ] |
 | 21 | Hunyuan3D experiment | Disabling it has zero effect on manual posing | [ ] |
 | 22 | Generated humanoids | Character passes deformation QA | [ ] |
