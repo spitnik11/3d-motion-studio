@@ -10,7 +10,7 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 |---|-------|------|--------|
 | 0 | Environment audit | Existing systems still launch | [x] |
 | 1 | Independent project | Delete/recreate without affecting siblings | [x] |
-| 2 | Asset Registry | Import → restart → identical metadata | [ ] |
+| 2 | Asset Registry | Import → restart → identical metadata | [x] |
 | 3 | Blender Bridge | Automated: launch→scene→object→move→save→reopen→verify | [ ] |
 | 4 | Character import (VRM/FBX/GLTF/BLEND) | Fixtures load w/ mesh, mats, rig, scale, provenance | [ ] |
 | 5 | SemanticRig v1 | One semantic command across 3 rig families | [ ] |

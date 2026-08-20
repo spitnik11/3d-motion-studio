@@ -26,7 +26,9 @@ read it). See [`docs/integration-boundaries.md`](docs/integration-boundaries.md)
 
 - **Phase 0 — Environment audit:** done. See [`docs/environment-audit.md`](docs/environment-audit.md).
 - **Phase 1 — Independent project:** done (this scaffold).
-- Next: install Blender 5.2 LTS (the one blocking dependency), then Phase 2 (Asset Registry).
+- **Phase 2 — Asset Registry:** done. `server/registry/registry.py` (stdlib sqlite3,
+  provenance + tri-state license perms, unknown = UNKNOWN). Gate test `tests/test_registry.py` passes.
+- Next: install Blender 5.2 LTS (blocking for Phase 3+), then Phase 3 (Blender Bridge).
 
 Roadmap and gates: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
