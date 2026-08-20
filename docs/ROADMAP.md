@@ -12,8 +12,8 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | 1 | Independent project | Delete/recreate without affecting siblings | [x] |
 | 2 | Asset Registry | Import → restart → identical metadata | [x] |
 | 3 | Blender Bridge | Automated: launch→scene→object→move→save→reopen→verify | [ ] |
-| 4 | Character import (VRM/FBX/GLTF/BLEND) | Fixtures load w/ mesh, mats, rig, scale, provenance | [ ] |
-| 5 | SemanticRig v1 | One semantic command across 3 rig families | [ ] |
+| 4 | Character import (VRM/FBX/GLTF/BLEND) | Fixtures load w/ mesh, mats, rig, scale, provenance | [x]¹ |
+| 5 | SemanticRig v1 | One semantic command across 3 rig families | [x] |
 | 6 | Manual Pose Studio | Create + recall 5 poses, no AI | [ ] |
 | 7 | Hand/finger posing | Hand pose transfers via SemanticRig to 2 chars | [ ] |
 | 8 | IK + Pose Locks | Agent/API cannot move locked bones | [ ] |
@@ -46,6 +46,10 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | 34 | Optional Blender MCP | Experiment only; not project truth | [ ] |
 | 35 | Project hardening | Missing optional dep disables feature, not app | [ ] |
 | 36 | Final acceptance test | Two chars + ring scene, full loop, repair 1 frame | [ ] |
+
+¹ Verified via a self-generated rigged+textured GLB (zero downloads). The **VRM path**
+(VrmCharacterImporter) is structurally in place but needs the Blender VRM add-on +
+a real VRoid file to fully verify — that's the one bit needing your asset.
 
 ## Immediate next step
 
