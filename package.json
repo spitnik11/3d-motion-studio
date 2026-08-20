@@ -1,0 +1,13 @@
+{
+  "name": "3d-motion-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Manual-first, AI-assisted 3D character posing and animation studio. Feeds PoseBundles to Frame Motion Studio and ComfyUI.",
+  "type": "module",
+  "scripts": {
+    "audit": "node -e \"console.log('See docs/environment-audit.md')\""
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

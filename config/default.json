@@ -1,0 +1,24 @@
+{
+  "app": {
+    "name": "3D Motion Studio",
+    "port": 3201
+  },
+  "comfy": {
+    "productionUrl": "http://127.0.0.1:8188",
+    "experimental3dUrl": "http://127.0.0.1:8190"
+  },
+  "frameMotion": {
+    "url": "http://127.0.0.1:3200"
+  },
+  "blender": {
+    "executable": null,
+    "requiredVersion": "5.2"
+  },
+  "capabilities": {
+    "meshGeneration": { "stableFast3d": false, "spar3d": false, "hunyuan": false },
+    "autoRig": { "unirig": false },
+    "motionGeneration": { "momask": false, "hymotion": false },
+    "charMorph": false,
+    "blenderMcp": false
+  }
+}
