@@ -11,15 +11,15 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | 0 | Environment audit | Existing systems still launch | [x] |
 | 1 | Independent project | Delete/recreate without affecting siblings | [x] |
 | 2 | Asset Registry | Import → restart → identical metadata | [x] |
-| 3 | Blender Bridge | Automated: launch→scene→object→move→save→reopen→verify | [ ] |
+| 3 | Blender Bridge | Automated: launch→scene→object→move→save→reopen→verify | [x] |
 | 4 | Character import (VRM/FBX/GLTF/BLEND) | Fixtures load w/ mesh, mats, rig, scale, provenance | [x]¹ |
 | 5 | SemanticRig v1 | One semantic command across 3 rig families | [x] |
-| 6 | Manual Pose Studio | Create + recall 5 poses, no AI | [ ] |
-| 7 | Hand/finger posing | Hand pose transfers via SemanticRig to 2 chars | [ ] |
-| 8 | IK + Pose Locks | Agent/API cannot move locked bones | [ ] |
-| 9 | Two-character contact | 3 stable paired poses manually | [ ] |
-| 10 | Pair Pose assets | Apply PairPose to a different compatible pair | [ ] |
-| 11 | Manual animation | 8–12 frame paired animation, no AI | [ ] |
+| 6 | Manual Pose Studio | Create + recall 5 poses, no AI | [x] |
+| 7 | Hand/finger posing | Hand pose transfers via SemanticRig to 2 chars | [x] |
+| 8 | IK + Pose Locks | Agent/API cannot move locked bones | [x] |
+| 9 | Two-character contact | 3 stable paired poses manually | [x] |
+| 10 | Pair Pose assets | Apply PairPose to a different compatible pair | [x] |
+| 11 | Manual animation | 8–12 frame paired animation, no AI | [x] |
 | 12 | Motion import + retarget | Import motion, edit hand/arm/foot/timing after retarget | [ ] |
 | 13 | Scene system | Load scene + 2 chars + lights + camera from one manifest | [ ] |
 | 14 | Camera system | Changing characters doesn't shift stored framing | [ ] |

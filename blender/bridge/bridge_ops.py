@@ -241,10 +241,11 @@ def op_createHumanoidFixture(cmd):
         add(f"shoulder.{s}", (0, 0, 1.60), (0.15 * k, 0, 1.60), "spine.upper")
         add(f"arm.{s}.upper", (0.15 * k, 0, 1.60), (0.45 * k, 0, 1.55), f"shoulder.{s}", True)
         add(f"arm.{s}.lower", (0.45 * k, 0, 1.55), (0.72 * k, 0, 1.50), f"arm.{s}.upper", True)
-        add(f"hand.{s}", (0.72 * k, 0, 1.50), (0.82 * k, 0, 1.50), f"arm.{s}.lower", True)
+        # hand/foot unconnected: contact end-effectors must be free to be pinned/IK'd.
+        add(f"hand.{s}", (0.72 * k, 0, 1.50), (0.82 * k, 0, 1.50), f"arm.{s}.lower", False)
         add(f"leg.{s}.upper", (0.10 * k, 0, 1.00), (0.10 * k, 0, 0.55), "pelvis")
         add(f"leg.{s}.lower", (0.10 * k, 0, 0.55), (0.10 * k, 0, 0.10), f"leg.{s}.upper", True)
-        add(f"foot.{s}", (0.10 * k, 0, 0.10), (0.10 * k, 0.15, 0.05), f"leg.{s}.lower", True)
+        add(f"foot.{s}", (0.10 * k, 0, 0.10), (0.10 * k, 0.15, 0.05), f"leg.{s}.lower", False)
         add(f"toe.{s}", (0.10 * k, 0.15, 0.05), (0.10 * k, 0.25, 0.05), f"foot.{s}", True)
         # Fingers spread along Y from the hand tip.
         for fi, finger in enumerate(FINGERS):
@@ -260,6 +261,64 @@ def op_createHumanoidFixture(cmd):
 
     bpy.ops.object.mode_set(mode="OBJECT")
     return {"armature": name, "bones": len(arm_data.bones)}
+
+
+def op_getBoneWorldHead(cmd):
+    """World head position, evaluated (so constraints like contacts are reflected)."""
+    arm = _obj(cmd["armature"])
+    bpy.context.view_layer.update()  # flush constraints into the evaluated depsgraph
+    deps = bpy.context.evaluated_depsgraph_get()
+    arm_eval = arm.evaluated_get(deps)
+    pbone = arm_eval.pose.bones.get(cmd["bone"])
+    if pbone is None:
+        raise KeyError(f"no bone {cmd['bone']!r}")
+    world = arm_eval.matrix_world @ pbone.head
+    return {"bone": cmd["bone"], "world": list(world)}
+
+
+def op_addCopyLocationConstraint(cmd):
+    """Contact primitive: pin `bone` to `targetBone` on another armature."""
+    arm = _obj(cmd["armature"])
+    pbone = arm.pose.bones.get(cmd["bone"])
+    if pbone is None:
+        raise KeyError(f"no bone {cmd['bone']!r}")
+    con = pbone.constraints.new("COPY_LOCATION")
+    con.name = cmd.get("name", "contact")
+    con.target = _obj(cmd["targetArmature"])
+    con.subtarget = cmd["targetBone"]
+    con.influence = float(cmd.get("influence", 1.0))
+    return {"bone": pbone.name, "constraint": con.name}
+
+
+def op_listConstraints(cmd):
+    arm = _obj(cmd["armature"])
+    pbone = arm.pose.bones.get(cmd["bone"])
+    if pbone is None:
+        raise KeyError(f"no bone {cmd['bone']!r}")
+    return {"bone": pbone.name,
+            "constraints": [{"name": c.name, "type": c.type} for c in pbone.constraints]}
+
+
+def _action_fcurves(action):
+    """Yield fcurves across both the legacy and Blender 4.4+ slotted-action APIs."""
+    if hasattr(action, "fcurves") and len(action.fcurves):  # legacy
+        yield from action.fcurves
+        return
+    for layer in getattr(action, "layers", []):
+        for strip in layer.strips:
+            for cbag in getattr(strip, "channelbags", []):
+                yield from cbag.fcurves
+
+
+def op_countKeyframes(cmd):
+    """Number of keyframes on an armature's action (for animation gate)."""
+    arm = _obj(cmd["armature"])
+    ad = arm.animation_data
+    if not ad or not ad.action:
+        return {"keyframes": 0, "fcurves": 0}
+    fcurves = list(_action_fcurves(ad.action))
+    n = sum(len(fc.keyframe_points) for fc in fcurves)
+    return {"keyframes": n, "fcurves": len(fcurves)}
 
 
 def op_addBodyMesh(cmd):
