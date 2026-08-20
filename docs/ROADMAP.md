@@ -21,10 +21,10 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | 10 | Pair Pose assets | Apply PairPose to a different compatible pair | [x] |
 | 11 | Manual animation | 8–12 frame paired animation, no AI | [x] |
 | 12 | Motion import + retarget | Import motion, edit hand/arm/foot/timing after retarget | [ ] |
-| 13 | Scene system | Load scene + 2 chars + lights + camera from one manifest | [ ] |
-| 14 | Camera system | Changing characters doesn't shift stored framing | [ ] |
-| 15 | Control pass renderer | Same scene state → repeatable passes | [ ] |
-| 16 | **PoseBundle v1** | Validate PoseBundle entirely outside Blender | [ ] |
+| 13 | Scene system | Load scene + 2 chars + lights + camera from one manifest | [x] |
+| 14 | Camera system | Changing characters doesn't shift stored framing | [x] |
+| 15 | Control pass renderer | Same scene state → repeatable passes | [x] |
+| 16 | **PoseBundle v1** | Validate PoseBundle entirely outside Blender | [x] |
 | 17 | Frame Motion import | Frame Motion loads a PoseBundle with Blender closed | [ ] |
 | 18 | Comfy finishing | One posed frame → stylized frame, pose preserved | [ ] |
 | 19 | **★ Full frame sequence** | Reject frame 5, regen only 5, rest untouched | [ ] |

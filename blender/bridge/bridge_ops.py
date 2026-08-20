@@ -172,8 +172,120 @@ def op_setCamera(cmd):
         cam.location = tuple(cmd["location"])
     if "rotation_euler" in cmd:
         cam.rotation_euler = tuple(cmd["rotation_euler"])
+    if "lens" in cmd:
+        cam.data.lens = float(cmd["lens"])
     bpy.context.scene.camera = cam
     return {"name": cam.name}
+
+
+def _project_2d(scene, cam, world_co):
+    """World coord → normalized (x,y) in [0,1] image space (y down). None if behind cam."""
+    from bpy_extras.object_utils import world_to_camera_view
+    co = world_to_camera_view(scene, cam, world_co)
+    if co.z <= 0:
+        return None
+    return [round(co.x, 5), round(1.0 - co.y, 5)]
+
+
+def op_projectJoints(cmd):
+    """2D camera projection of an armature's canonical joints — feeds OpenPose (pose.json)."""
+    scene = bpy.context.scene
+    cam = scene.camera
+    if cam is None:
+        raise ValueError("no active camera")
+    arm = _obj(cmd["armature"])
+    deps = bpy.context.evaluated_depsgraph_get()
+    arm_eval = arm.evaluated_get(deps)
+    joints = {}
+    for canonical in cmd["bones"]:
+        pb = arm_eval.pose.bones.get(canonical)
+        if pb is None:
+            continue
+        joints[canonical] = _project_2d(scene, cam, arm_eval.matrix_world @ pb.head)
+    return {"armature": cmd["armature"], "joints": joints}
+
+
+def op_renderControlPasses(cmd):
+    """Render RGB + depth + normal + silhouette + per-actor masks for one frame.
+
+    actors: [{"name": armature_name, "index": 1}, ...] — index tags the actor's body
+    mesh for its ID mask. Deterministic: same scene state → same files.
+    """
+    scene = bpy.context.scene
+    outdir = cmd["outdir"]
+    frame = int(cmd.get("frame", scene.frame_current))
+    scene.frame_set(frame)
+    scene.render.engine = "BLENDER_EEVEE"
+    scene.render.resolution_x = int(cmd.get("width", 512))
+    scene.render.resolution_y = int(cmd.get("height", 512))
+    scene.render.film_transparent = True
+    # Determinism: kill dithering + temporal jitter so identical state → identical pixels.
+    scene.render.dither_intensity = 0.0
+    scene.render.filter_size = 0.0
+    scene.eevee.taa_render_samples = int(cmd.get("samples", 1))
+    scene.eevee.use_taa_reprojection = False
+
+    vl = bpy.context.view_layer
+    vl.use_pass_z = True
+    vl.use_pass_normal = True
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.image_settings.color_mode = "RGBA"
+
+    actors = cmd.get("actors", [])
+    actor_meshes = {a["index"]: [o for o in scene.objects
+                                 if o.type == "MESH" and o.name.startswith(a["name"])]
+                    for a in actors}
+    all_meshes = [o for ms in actor_meshes.values() for o in ms]
+
+    def direct_render(pass_name):
+        scene.compositing_node_group = None
+        scene.render.filepath = f"{outdir}/{pass_name}"
+        bpy.ops.render.render(write_still=True)
+
+    # depth + normal → one multilayer EXR (the File Output node writes this reliably).
+    nt = bpy.data.node_groups.new("cp", "CompositorNodeTree")
+    scene.compositing_node_group = nt
+    nt.nodes.clear()
+    rl = nt.nodes.new("CompositorNodeRLayers")
+    fo = nt.nodes.new("CompositorNodeOutputFile")
+    fo.directory = outdir
+    fo.file_name = "passes"
+    for i, (item_name, socket_names) in enumerate([("Depth", ("Depth", "Z")), ("Normal", ("Normal",))]):
+        fo.file_output_items.new("RGBA", item_name)
+        sock = next(rl.outputs[n] for n in socket_names if n in rl.outputs)
+        nt.links.new(sock, fo.inputs[i])
+    scene.render.filepath = f"{outdir}/preview"
+    bpy.ops.render.render(write_still=True)  # writes preview + passes*.exr
+
+    # silhouette (all visible) + per-actor masks (isolation) — alpha in the PNG.
+    direct_render("silhouette")
+    for a in actors:
+        for o in all_meshes:
+            o.hide_render = o not in actor_meshes[a["index"]]
+        direct_render(f"actor_{a['index']}_mask")
+    for o in all_meshes:
+        o.hide_render = False
+
+    return {"frame": frame, "outdir": outdir, "actors": [a["index"] for a in actors]}
+
+
+def op_addLight(cmd):
+    ltype = cmd.get("type", "SUN").upper()
+    data = bpy.data.lights.new(cmd.get("name", "Light"), ltype)
+    data.energy = float(cmd.get("energy", 3.0 if ltype == "SUN" else 500.0))
+    obj = bpy.data.objects.new(cmd.get("name", "Light"), data)
+    bpy.context.scene.collection.objects.link(obj)
+    obj.location = tuple(cmd.get("location", (2, -2, 4)))
+    obj.rotation_euler = tuple(cmd.get("rotation_euler", (0.6, 0.1, 0.8)))
+    return {"name": obj.name}
+
+
+def op_addGroundPlane(cmd):
+    bpy.ops.mesh.primitive_plane_add(size=float(cmd.get("size", 20.0)),
+                                     location=tuple(cmd.get("location", (0, 0, 0))))
+    p = bpy.context.active_object
+    p.name = cmd.get("name", "Ground")
+    return {"name": p.name}
 
 
 def op_renderPreview(cmd):
