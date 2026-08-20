@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Motion Studio</title>
+<style>
+  :root{
+    --bg:#0d0e11; --panel:#15171c; --panel2:#1b1e24; --line:#262931; --text:#e6e8ee;
+    --dim:#9096a1; --accent:#6ea8fe; --ok:#4ade80; --warn:#fbbf24; --off:#4b5563; --radius:8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:16px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+  header h1{font-size:14px;font-weight:600;margin:0;letter-spacing:.3px}
+  header .tag{color:var(--dim);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+  .pills{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+  .pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--off)}
+  .dot.on{background:var(--ok)} .dot.warn{background:var(--warn)}
+  main{flex:1;display:grid;grid-template-columns:280px 1fr;min-height:0}
+  aside{border-right:1px solid var(--line);background:var(--panel);overflow:auto;padding:14px}
+  section.work{overflow:auto;padding:18px 22px}
+  h2{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin:18px 0 8px;font-weight:600}
+  h2:first-child{margin-top:0}
+  .cap{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+  .card h3{margin:0 0 10px;font-size:13px;font-weight:600}
+  label{display:block;color:var(--dim);font-size:11.5px;margin:8px 0 3px}
+  input,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 9px;font-size:12.5px;font-family:inherit}
+  button{background:var(--accent);color:#06121f;border:0;border-radius:6px;padding:8px 14px;font-weight:600;font-size:12.5px;cursor:pointer;margin-top:10px}
+  button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+  button:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:10px} .row>*{flex:1}
+  .result{margin-top:12px;font-size:12px;color:var(--dim);white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .result img{max-width:100%;border:1px solid var(--line);border-radius:6px;margin-top:8px}
+  .asset{font-size:12px;padding:3px 0;color:var(--text)} .asset .k{color:var(--accent);font-size:10.5px;text-transform:uppercase}
+  .muted{color:var(--dim)} .spin{color:var(--accent)}
+  .planned{opacity:.55;font-size:11.5px;border:1px dashed var(--line);border-radius:6px;padding:8px 10px;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>3D Motion Studio</h1><span class="tag">control v0</span>
+  <div class="pills" id="pills"></div>
+</header>
+<main>
+  <aside>
+    <h2>Capabilities</h2><div id="caps"><span class="muted">loading…</span></div>
+    <h2>Assets</h2><div id="assets"><span class="muted">loading…</span></div>
+  </aside>
+  <section class="work">
+    <div class="card">
+      <h3>Generate 3D mesh from image</h3>
+      <label>Provider</label>
+      <select id="mprov"><option value="stableFast3d">Stable Fast 3D (fast)</option><option value="spar3d">SPAR3D (detail)</option></select>
+      <label>Image path (server-side)</label>
+      <input id="mimg" placeholder="Z:/ai-assets/person_sample.png">
+      <button id="mbtn" onclick="genMesh()">Generate mesh</button>
+      <div class="result" id="mres"></div>
+    </div>
+    <div class="card">
+      <h3>Auto-rig — predict skeleton (UniRig)</h3>
+      <label>Mesh path (server-side)</label>
+      <input id="smesh" placeholder="Z:/ai-assets/humanoid/mesh.glb">
+      <button id="sbtn" onclick="genSkeleton()">Predict skeleton</button>
+      <div class="result" id="sres"></div>
+    </div>
+    <div class="card">
+      <h3>Extract pose from image/video (driving video)</h3>
+      <label>Input path (server-side)</label>
+      <input id="pin" placeholder="Z:/ai-assets/person_sample.png">
+      <button id="pbtn" onclick="extractPose()">Extract pose</button>
+      <div class="result" id="pres"></div>
+    </div>
+    <div class="card">
+      <h3>Pipeline (planned — React/R3F track)</h3>
+      <div class="planned">Live 3D viewport · semantic pose studio · typed pipeline graph · timeline · import studio (Sketchfab / SmutBase, quarantine + license review). See docs/FRONTEND.md — UI-A…UI-H.</div>
+    </div>
+  </section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+async function jget(u){return (await fetch(u)).json();}
+async function jpost(u,b){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});if(!r.ok)throw new Error((await r.json()).detail||r.statusText);return r.json();}
+
+async function loadStatus(){
+  try{
+    const c=await jget('/api/capabilities');
+    const svc=[['Blender',c.blender.available],['ComfyUI',c.comfy.available],['Frame Motion',c.frameMotion.available]];
+    $('#pills').innerHTML=svc.map(([n,on])=>`<span class="pill"><span class="dot ${on?'on':''}"></span>${n}</span>`).join('');
+    const caps=Object.entries(c.capabilities||{});
+    $('#caps').innerHTML=caps.length?caps.map(([k,on])=>`<div class="cap"><span class="dot ${on?'on':''}"></span>${k}</div>`).join(''):'<span class="muted">none</span>';
+  }catch(e){$('#pills').innerHTML='<span class="pill muted">API offline</span>';}
+}
+async function loadAssets(){
+  try{
+    const d=await jget('/api/assets');
+    const cats=d.categories||{};
+    $('#assets').innerHTML=Object.keys(cats).length?Object.entries(cats).map(([cat,list])=>
+      `<div class="muted" style="margin-top:6px">${cat}</div>`+list.map(a=>`<div class="asset"><span class="k">${a.kind}</span> ${esc(a.name)}</div>`).join('')
+    ).join(''):`<span class="muted">no assets yet (${d.count||0})</span>`;
+  }catch(e){$('#assets').innerHTML='<span class="muted">—</span>';}
+}
+function busy(btn,res,msg){btn.disabled=true;res.innerHTML='<span class="spin">'+msg+'</span>';}
+function done(btn){btn.disabled=false;}
+async function genMesh(){
+  const b=$('#mbtn'),r=$('#mres');busy(b,r,'generating… (GPU, ~30s)');
+  try{const o=await jpost('/api/generate/mesh',{provider:$('#mprov').value,image:$('#mimg').value});
+    r.innerHTML=`✓ ${o.validation.verts} verts / ${o.validation.faces} faces · approved=${o.approved}\n${o.mesh}`+(o.preview?`<img src="${o.preview}?t=${Date.now()}">`:'');loadAssets();}
+  catch(e){r.innerHTML='✗ '+e.message;}done(b);
+}
+async function genSkeleton(){
+  const b=$('#sbtn'),r=$('#sres');busy(b,r,'predicting skeleton… (GPU, ~60s)');
+  try{const o=await jpost('/api/generate/skeleton',{mesh:$('#smesh').value});
+    r.innerHTML=`✓ ${o.boneCount}-bone skeleton (${o.armature})\n${o.skeleton}`;}
+  catch(e){r.innerHTML='✗ '+e.message;}done(b);
+}
+async function extractPose(){
+  const b=$('#pbtn'),r=$('#pres');busy(b,r,'extracting pose…');
+  try{const o=await jpost('/api/extract/pose',{input:$('#pin').value});
+    r.innerHTML=`✓ ${o.frameCount} frame(s), ${o.jointsDetected.length} joints\n${o.jointsDetected.join(', ')}`;}
+  catch(e){r.innerHTML='✗ '+e.message;}done(b);
+}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+loadStatus();loadAssets();
+</script>
+</body>
+</html>

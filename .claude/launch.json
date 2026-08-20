@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "3d-motion-studio",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "server.api.app:app", "--host", "127.0.0.1", "--port", "3201"],
+      "port": 3201
+    }
+  ]
+}

@@ -72,3 +72,32 @@ gracefully without them):
 - A real VRoid/Quaternius character to fully exercise the VRM importer (¹).
 - GPU model installs to switch the live AI generators on: Stable Fast 3D/SPAR3D (²),
   UniRig / MoMask / HY-Motion / driving-video pose extraction (³).
+
+### Live AI generators (post-plan, on the RTX 5070)
+Stable Fast 3D ✅ · SPAR3D ✅ · UniRig skeleton ✅ · driving-video pose ✅ · real VRM/GLB
+import ✅. Deferred (need porting): UniRig skinning, MoMask, HY-Motion. See `docs/GENERATORS.md`.
+**AI loop closed**: generated prop → PoseBundle; generated humanoid → UniRig → auto-calibrate
+(SemanticRig) → posed (`test_compose.py`, `test_generated_character.py`).
+
+---
+
+## Parallel UI + Import track (companion design doc)
+
+Added per `3D_Motion_Studio_UI_Import_Design.md` — a **parallel** track that does not
+renumber the 36 backend phases; on conflict the hardened backend plan wins. Full plan +
+import architecture in **`docs/FRONTEND.md`**.
+
+| Track | Scope | Status |
+|---|---|---|
+| — | **Control panel v0** (single-file, served at `/` on :3201) over the Agent API | [x] |
+| UI-A | React app shell (workspace tabs, docked layout, Inspector, keyboard) | [ ] |
+| UI-B | Import Studio (quarantine, inspection, license/dep, Sketchfab + SmutBase adapters) | [ ] |
+| UI-C | Live R3F viewport + WebSocket sync + Outliner | [ ] |
+| UI-D | Pose Studio (body/hand/IK/locks/contacts/pair-pose) | [ ] |
+| UI-E | Animation Studio (timeline/keyframes/retarget/camera) | [ ] |
+| UI-F | Typed pipeline canvas (@xyflow/react) | [ ] |
+| UI-G | Full Asset Browser (search/tags/badges/thumbnails) | [ ] |
+| UI-H | AI surfaces (gated providers + agent assist) | [ ]⁴ |
+
+⁴ The live generators (SFast3D/SPAR3D/UniRig/driving-video) are already exposed in the
+control-panel-v0 Generate panels; UI-H is the full node-based surface.
