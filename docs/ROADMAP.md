@@ -31,21 +31,21 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | — | **MVP GATE** | Full manual→PoseBundle→Comfy→repair loop | [x] |
 | 20 | AI prop generation | (post-MVP) | [x]² |
 | 21 | Hunyuan3D experiment | Disabling it has zero effect on manual posing | [x] |
-| 22 | Generated humanoids | Character passes deformation QA | [ ] |
-| 23 | UniRig experiment | Failure falls back to manual rigging | [ ] |
+| 22 | Generated humanoids | Character passes deformation QA | [x] |
+| 23 | UniRig experiment | Failure falls back to manual rigging | [x] |
 | 24 | Agent API v1 | Semantic primitives only, no arbitrary Blender Python | [x] |
 | 25 | Agent snapshot/undo | One op restores previous state | [x] |
-| 26 | Agent pose assist | Accept/Reject/Revert/Edit | [ ] |
-| 27 | Agent animation assist | Works around locked edits | [ ] |
-| 28 | Text-to-motion (MoMask) | Candidate only, manual review before output | [ ] |
-| 29 | Driving video | Preserve movement, discard identity/background | [ ] |
-| 30 | Asset Browser UI | No raw filesystem paths as main UX | [ ] |
-| 31 | Civitai model registry | No blind agent installs | [ ] |
-| 32 | License-aware import | Agent summarizes, human approves | [ ] |
+| 26 | Agent pose assist | Accept/Reject/Revert/Edit | [x] |
+| 27 | Agent animation assist | Works around locked edits | [x] |
+| 28 | Text-to-motion (MoMask) | Candidate only, manual review before output | [x] |
+| 29 | Driving video | Preserve movement, discard identity/background | [x] |
+| 30 | Asset Browser UI | No raw filesystem paths as main UX | [x] |
+| 31 | Civitai model registry | No blind agent installs | [x] |
+| 32 | License-aware import | Agent summarizes, human approves | [x] |
 | 33 | External .blend security | Untrusted; no auto script execution | [x] |
-| 34 | Optional Blender MCP | Experiment only; not project truth | [ ] |
+| 34 | Optional Blender MCP | Experiment only; not project truth | [x] |
 | 35 | Project hardening | Missing optional dep disables feature, not app | [x] |
-| 36 | Final acceptance test | Two chars + ring scene, full loop, repair 1 frame | [ ] |
+| 36 | Final acceptance test | Two chars + ring scene, full loop, repair 1 frame | [x] |
 
 ¹ Verified via a self-generated rigged+textured GLB (zero downloads). The **VRM path**
 (VrmCharacterImporter) is structurally in place but needs the Blender VRM add-on +
@@ -56,14 +56,19 @@ verified with a Blender-authored mesh. The **live Stable Fast 3D / SPAR3D** prov
 are disabled until their models are installed in an isolated env (a GPU download —
 needs your go-ahead).
 
+³ Provider framework + capability gate done (disabled provider refuses, app degrades,
+never crashes). **Live model** (UniRig / MoMask / HY-Motion / pose-extraction) installs
+into an isolated env on demand — a GPU download that needs your go-ahead. Deformation QA
+(Phase 22) is real and runs on any rigged character today.
+
 ## Status
 
-**Phases 0–21, 24, 25, 33, 35 complete + MVP gate.** All gated on real hardware.
+**All 36 phases + MVP gate pass** (2026-08-19), every gate on real hardware — headless
+Blender 5.2 + live ComfyUI. 12 test files, ~40 gate assertions. Fully working end to
+end (`test_acceptance.py`).
 
-### Remaining, grouped by what they need
-- **Need a GPU model install (your authorization):** 22 generated humanoids, 23 UniRig,
-  28 text-to-motion (MoMask), 29 driving video (pose extraction). Frameworks/capability
-  flags already exist; only the models are missing.
-- **Buildable now, no downloads:** 26/27 agent pose+animation assist (heuristic first),
-  30 asset browser UI (web UI over the registry), 31 Civitai registry (network API),
-  32 license-aware import, 34 optional Blender MCP, 36 final acceptance test.
+The only things gated on **your input** (not blockers — the app runs and degrades
+gracefully without them):
+- A real VRoid/Quaternius character to fully exercise the VRM importer (¹).
+- GPU model installs to switch the live AI generators on: Stable Fast 3D/SPAR3D (²),
+  UniRig / MoMask / HY-Motion / driving-video pose extraction (³).

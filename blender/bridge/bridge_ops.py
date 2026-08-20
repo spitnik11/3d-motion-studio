@@ -119,6 +119,26 @@ def op_importModel(cmd):
     return {"objects": [o.name for o in bpy.context.selected_objects]}
 
 
+def op_evaluatedMeshBounds(cmd):
+    """Evaluated (deformed) world bounding box of a mesh — for deformation QA."""
+    o = _obj(cmd["mesh"])
+    bpy.context.view_layer.update()
+    deps = bpy.context.evaluated_depsgraph_get()
+    ev = o.evaluated_get(deps)
+    me = ev.to_mesh()
+    if not me.vertices:
+        ev.to_mesh_clear()
+        return {"mesh": cmd["mesh"], "empty": True}
+    mw = ev.matrix_world
+    pts = [mw @ v.co for v in me.vertices]
+    xs = [p.x for p in pts]; ys = [p.y for p in pts]; zs = [p.z for p in pts]
+    ev.to_mesh_clear()
+    import math
+    finite = all(math.isfinite(c) for c in xs + ys + zs)
+    return {"mesh": cmd["mesh"], "empty": False, "finite": finite,
+            "min": [min(xs), min(ys), min(zs)], "max": [max(xs), max(ys), max(zs)]}
+
+
 def op_meshStats(cmd):
     """Import a mesh and report geometry stats — mesh validation for generated assets."""
     before = set(bpy.data.objects.keys())

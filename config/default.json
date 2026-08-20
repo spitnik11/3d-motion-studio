@@ -17,7 +17,7 @@
   "capabilities": {
     "meshGeneration": { "stableFast3d": false, "spar3d": false, "hunyuan": false },
     "autoRig": { "unirig": false },
-    "motionGeneration": { "momask": false, "hymotion": false },
+    "motionGeneration": { "momask": false, "hymotion": false, "drivingVideo": false },
     "charMorph": false,
     "blenderMcp": false
   }

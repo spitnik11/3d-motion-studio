@@ -11,9 +11,11 @@ import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from server.blender_bridge import BlenderBridge
+from server.registry.registry import AssetRegistry
 from server.scene import load_scene_commands
 from server.posing import apply_pose_commands
 from server.contacts import apply_contacts_commands
@@ -37,6 +39,35 @@ SEMANTIC_VERBS = {
 }
 
 app = FastAPI(title="3D Motion Studio Agent API", version="1.0")
+
+_UI = _ROOT / "apps" / "control-ui" / "asset-browser.html"
+_registry = AssetRegistry()
+
+# Registry kind → Asset Browser category (Phase 30).
+KIND_CATEGORY = {
+    "CharacterAsset": "Characters", "PoseAsset": "Poses", "HandPoseAsset": "Poses",
+    "PairPoseAsset": "Poses", "MotionAsset": "Motions", "SceneAsset": "Scenes",
+    "PropAsset": "Props", "StyleProfile": "Styles", "RigProfile": "Rigs",
+}
+
+
+@app.get("/", response_class=HTMLResponse)
+def asset_browser():
+    return _UI.read_text(encoding="utf-8") if _UI.is_file() else "<h1>Asset Browser</h1>"
+
+
+@app.get("/api/assets")
+def api_assets():
+    """Assets grouped by category. Cards carry NO raw filesystem path — only names/
+    metadata (Phase 30). The path lives under `details`, not the card surface."""
+    groups: dict[str, list] = {}
+    for a in _registry.all():
+        card = {"id": a["id"], "name": a["name"], "kind": a["kind"],
+                "creator": a.get("creator", ""), "license": a.get("license", ""),
+                "format": a.get("format", ""),
+                "details": {"localPath": a.get("localPath", ""), "sha256": a.get("sha256", "")}}
+        groups.setdefault(KIND_CATEGORY.get(a["kind"], "Other"), []).append(card)
+    return {"categories": groups, "count": sum(len(v) for v in groups.values())}
 
 
 def _bridge() -> BlenderBridge:

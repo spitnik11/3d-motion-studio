@@ -86,7 +86,9 @@ class AssetRegistry:
         self.db_path = str(db_path)
         if db_path != ":memory:":
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(self.db_path)
+        # check_same_thread=False: the API serves reads from a threadpool. SQLite still
+        # serializes access and this tool is single-writer, so this is safe.
+        self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute(
             """CREATE TABLE IF NOT EXISTS assets (
