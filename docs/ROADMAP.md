@@ -20,7 +20,7 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | 9 | Two-character contact | 3 stable paired poses manually | [x] |
 | 10 | Pair Pose assets | Apply PairPose to a different compatible pair | [x] |
 | 11 | Manual animation | 8–12 frame paired animation, no AI | [x] |
-| 12 | Motion import + retarget | Import motion, edit hand/arm/foot/timing after retarget | [ ] |
+| 12 | Motion import + retarget | Import motion, edit hand/arm/foot/timing after retarget | [x] |
 | 13 | Scene system | Load scene + 2 chars + lights + camera from one manifest | [x] |
 | 14 | Camera system | Changing characters doesn't shift stored framing | [x] |
 | 15 | Control pass renderer | Same scene state → repeatable passes | [x] |

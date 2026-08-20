@@ -23,7 +23,9 @@ from mathutils import Euler
 
 # Import the shared canonical skeleton (pure-python module, no bpy).
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from characters.semantic_rig import SIDES, FINGERS, FINGER_SEGS, canonical_finger  # noqa: E402
+from characters.semantic_rig import (  # noqa: E402
+    SIDES, FINGERS, FINGER_SEGS, canonical_finger, SemanticRig, CANONICAL,
+)
 
 
 # ---- helpers ---------------------------------------------------------------
@@ -267,6 +269,49 @@ def op_renderControlPasses(cmd):
         o.hide_render = False
 
     return {"frame": frame, "outdir": outdir, "actors": [a["index"] for a in actors]}
+
+
+def op_exportBVH(cmd):
+    arm = _obj(cmd["armature"])
+    bpy.ops.object.select_all(action="DESELECT")
+    arm.select_set(True)
+    bpy.context.view_layer.objects.active = arm
+    scene = bpy.context.scene
+    bpy.ops.export_anim.bvh(
+        filepath=cmd["path"],
+        frame_start=int(cmd.get("frame_start", scene.frame_start)),
+        frame_end=int(cmd.get("frame_end", scene.frame_end)),
+    )
+    return {"path": cmd["path"]}
+
+
+def op_retargetMotion(cmd):
+    """Copy a source armature's per-frame rotations onto a target via SemanticRig.
+
+    Same-proportion retarget (local euler copy) — real and editable afterwards.
+    """
+    source = _obj(cmd["source"])
+    target = _obj(cmd["target"])
+    srig = SemanticRig(cmd.get("sourceFamily", "canonical"))
+    trig = SemanticRig(cmd.get("targetFamily", "canonical"))
+    bones = cmd.get("bones", CANONICAL)
+    scene = bpy.context.scene
+    frames = cmd.get("frames") or list(range(scene.frame_start, scene.frame_end + 1))
+    written = 0
+    for f in frames:
+        scene.frame_set(int(f))
+        bpy.context.view_layer.update()
+        for c in bones:
+            sb, tb = srig.family_bone(c), trig.family_bone(c)
+            spb = source.pose.bones.get(sb) if sb else None
+            tpb = target.pose.bones.get(tb) if tb else None
+            if not spb or not tpb:
+                continue
+            tpb.rotation_mode = "XYZ"
+            tpb.rotation_euler = spb.rotation_euler
+            tpb.keyframe_insert(data_path="rotation_euler", frame=int(f))
+            written += 1
+    return {"target": cmd["target"], "keys": written, "frames": len(frames)}
 
 
 def op_addLight(cmd):
