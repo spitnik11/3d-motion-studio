@@ -10,6 +10,7 @@ Audited 2026-08-19 on the RTX 5070 (Blackwell, **sm_120**), torch 2.13.0+cu130, 
 |---|---|---|
 | **Stable Fast 3D** image→3D (Phase 20) | `Z:/ai-envs/stable-fast-3d` (py3.13, torch 2.13+cu130) | **LIVE on the 5070** — real textured `mesh.glb` (~3.7k verts) from an image in ~3s, peak 6.2 GB VRAM. Full pipeline generate→stage→validate→approve→registry. Test: `tests/test_stable_fast_3d.py`. Weights (5.5 GB) on `Z:/ai-models/hf`. |
 | **SPAR3D** image→3D (Phase 20) | same env (+ CLIP, AlphaCLIP, transparent-background) | **LIVE** — higher-detail `mesh.glb` (~13k verts) + point cloud, ~10.5 GB peak. Same provider path. Note: `transparent-background` downloads a bg-removal model on first run (one-time). Test: same file. |
+| **UniRig** auto-skeleton (Phase 23) | `Z:/ai-envs/unirig` (py3.11, torch cu130) | **LIVE (skeleton stage)** — mesh → predicted armature FBX (giraffe → 44 bones). How: **spconv** runs on Blackwell via cumm runtime-JIT + CUDA-12 runtime DLLs auto-loaded by a `sitecustomize.py`; **torch_scatter/torch_cluster** built from source for sm_120; **flash_attn avoided** by setting `_attn_implementation: sdpa` in `configs/model/unirig_ar_350m_1024_81920_float32.yaml` (+ a stub flash_attn for the soft import). Test: `tests/test_unirig.py`. **Skinning stage** still needs real flash_attn (Windows-hostile) — deferred. |
 | **Driving-video pose extraction** (Phase 29) | `Z:/ai-envs/driving-video` (mediapipe 0.10.14) | **Working** — video/image → canonical joints; enabled via `config/local.json`. Test: `tests/test_driving_video.py`. |
 | **Real character import** (VRM + GLB) | Blender VRM add-on v4.5.0 | **Working** — CC0 VRoid VRM + CC-BY Khronos GLB import; `vroid` SemanticRig family. Test: `tests/test_real_assets.py`. |
 
@@ -29,7 +30,8 @@ gracefully (disabled → refuse, never crash), so the app is unaffected.
 |---|---|---|
 | ~~stable-fast-3d~~ | **DONE — now LIVE** | ✅ |
 | ~~stable-point-aware-3d / SPAR3D~~ | **DONE — now LIVE** (AlphaCLIP installed `--no-build-isolation`) | ✅ |
-| **UniRig** (Phase 23) | `flash_attn` + `spconv` + `torch_scatter/cluster` all need compile; no cu130 wheels; `bpy==4.2` conflicts w/ Blender 5.2 | build tools + a torch-geometric build matched to cu130 (may need source builds) |
+| ~~UniRig skeleton~~ | **DONE — LIVE** (see above) | ✅ |
+| UniRig **skinning** stage | needs real `flash_attn` (hard import in `unirig_skin.py`) — Windows build is the wall | build flash_attn from source on Windows (hours, uncertain) |
 | **momask-codes** (Phase 28) | pins **torch 1.12.0+cu113** → no Blackwell kernels; ancient numpy/matplotlib pins | port to torch ≥2.7; CPU-only fallback possible but slow |
 | **HY-Motion-1.0** (Phase 28) | pins **torch 2.5.1** → no sm_120 kernels; needs Autodesk `fbxsdkpy` | bump to torch ≥2.7/cu128 + FBX SDK |
 
