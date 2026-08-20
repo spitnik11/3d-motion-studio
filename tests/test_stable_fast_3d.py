@@ -49,6 +49,34 @@ def test_phase20_stable_fast_3d_live():
             shutil.rmtree(_UNAPPROVED / pending["id"], ignore_errors=True)
 
 
+def test_phase20_spar3d_live():
+    prov = get_provider("spar3d")
+    if not prov.available:
+        print("SKIP: SPAR3D env/capability not available")
+        return
+    ex = "Z:/ai-repos/stable-point-aware-3d/demo_files/examples"
+    from pathlib import Path as _P
+    imgs = sorted(_P(ex).glob("*.png")) if _P(ex).is_dir() else []
+    if not imgs:
+        print("SKIP: no SPAR3D example image")
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        out_mesh = str(Path(tmp) / "prop.glb")
+        prov.generate(str(imgs[0]), out_mesh)
+        assert Path(out_mesh).stat().st_size > 0
+        registry = AssetRegistry(":memory:")
+        pending = stage_unapproved(out_mesh, source=imgs[0].name, provider="spar3d")
+        try:
+            v = validate_mesh(pending)
+            assert v["ok"] and v["verts"] > 100, v
+            rec = approve(pending, registry, name="GeneratedSpar3D")
+            assert rec["kind"] == "PropAsset"
+            print(f"SPAR3D generated + approved: {v['verts']} verts / {v['faces']} faces")
+        finally:
+            shutil.rmtree(_UNAPPROVED / pending["id"], ignore_errors=True)
+
+
 if __name__ == "__main__":
     test_phase20_stable_fast_3d_live()
-    print("Phase 20 Stable Fast 3D: live gate passes")
+    test_phase20_spar3d_live()
+    print("Phase 20 Stable Fast 3D + SPAR3D: live gates pass")

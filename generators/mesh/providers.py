@@ -18,8 +18,26 @@ from server.capabilities import Capabilities
 
 SF3D_ENV_PY = Path("Z:/ai-envs/stable-fast-3d/Scripts/python.exe")
 SF3D_REPO = Path("Z:/ai-repos/stable-fast-3d")
+SPAR3D_REPO = Path("Z:/ai-repos/stable-point-aware-3d")
 _HF_HUB_CACHE = "Z:/ai-models/hf"
 _CUDA_BIN = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.3/bin"
+
+
+def _run_image_to_3d(env_python: Path, repo: Path, image_path: str, out_path: str) -> str:
+    """Shared runner: <repo>/run.py <image> --output-dir tmp → move tmp/0/mesh.glb → out_path."""
+    env = os.environ.copy()
+    env["HF_HUB_CACHE"] = _HF_HUB_CACHE
+    env["PATH"] = _CUDA_BIN + os.pathsep + env.get("PATH", "")
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(
+            [str(env_python), "run.py", image_path, "--output-dir", tmp],
+            cwd=str(repo), env=env, check=True, capture_output=True, text=True)
+        mesh = Path(tmp) / "0" / "mesh.glb"
+        if not mesh.is_file():
+            raise RuntimeError(f"{repo.name} produced no mesh")
+        Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(mesh, out_path)
+    return out_path
 
 
 class NotAvailable(RuntimeError):
@@ -59,23 +77,20 @@ class StableFast3DProvider(MeshProvider):
         return self.caps.enabled(f"meshGeneration.{self.key}") and self.env_python.is_file()
 
     def _generate(self, image_path: str, out_path: str) -> str:
-        env = os.environ.copy()
-        env["HF_HUB_CACHE"] = _HF_HUB_CACHE
-        env["PATH"] = _CUDA_BIN + os.pathsep + env.get("PATH", "")
-        with tempfile.TemporaryDirectory() as tmp:
-            subprocess.run(
-                [str(self.env_python), "run.py", image_path, "--output-dir", tmp],
-                cwd=str(SF3D_REPO), env=env, check=True, capture_output=True, text=True)
-            mesh = Path(tmp) / "0" / "mesh.glb"
-            if not mesh.is_file():
-                raise RuntimeError("Stable Fast 3D produced no mesh")
-            Path(out_path).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(mesh, out_path)
-        return out_path
+        return _run_image_to_3d(self.env_python, SF3D_REPO, image_path, out_path)
 
 
 class Spar3DProvider(MeshProvider):
+    """LIVE: image → higher-detail 3D mesh (+ point cloud) via SPAR3D, same isolated env."""
     key, name = "spar3d", "SPAR3D"
+    env_python = SF3D_ENV_PY
+
+    @property
+    def available(self) -> bool:
+        return self.caps.enabled(f"meshGeneration.{self.key}") and self.env_python.is_file()
+
+    def _generate(self, image_path: str, out_path: str) -> str:
+        return _run_image_to_3d(self.env_python, SPAR3D_REPO, image_path, out_path)
 
 
 class Hunyuan3DProvider(MeshProvider):
