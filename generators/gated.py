@@ -25,6 +25,7 @@ class GatedProvider:
         return self.caps.enabled(self.cap_path)
 
     def require(self) -> None:
+        # Uses self.available so subclasses that also check for an installed env/model win.
         if not self.available:
             raise NotAvailable(
                 f"{self.name} disabled — enable capabilities.{self.cap_path} after "
