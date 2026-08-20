@@ -50,10 +50,7 @@ class BlenderBridge:
             res_file = Path(tmp) / "result.json"
             cmd_file.write_text(json.dumps(cmds), encoding="utf-8")
 
-            argv = [self.blender_exe, "--background"]
-            if blend_in:
-                argv.append(blend_in)
-            argv += ["--python", str(_OPS_SCRIPT), "--", str(cmd_file), str(res_file)]
+            argv = self.build_argv(blend_in, str(cmd_file), str(res_file))
 
             proc = subprocess.run(argv, capture_output=True, text=True, timeout=self.timeout)
             if not res_file.exists():
@@ -62,6 +59,15 @@ class BlenderBridge:
                     f"stderr tail:\n{proc.stderr[-2000:]}"
                 )
             return json.loads(res_file.read_text(encoding="utf-8"))
+
+    def build_argv(self, blend_in, cmd_file: str, res_file: str) -> list[str]:
+        # --disable-autoexec: never auto-run Python embedded in a loaded .blend
+        # (external blends are untrusted; our own bridge_ops via --python still runs).
+        argv = [self.blender_exe, "--background", "--disable-autoexec"]
+        if blend_in:
+            argv.append(blend_in)
+        argv += ["--python", str(_OPS_SCRIPT), "--", cmd_file, res_file]
+        return argv
 
     def health(self) -> dict:
         return self.run([{"op": "health"}])[0]

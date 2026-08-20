@@ -29,12 +29,12 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | 18 | Comfy finishing | One posed frame → stylized frame, pose preserved | [x] |
 | 19 | **★ Full frame sequence** | Reject frame 5, regen only 5, rest untouched | [x] |
 | — | **MVP GATE** | Full manual→PoseBundle→Comfy→repair loop | [x] |
-| 20 | AI prop generation | (post-MVP) | [ ] |
-| 21 | Hunyuan3D experiment | Disabling it has zero effect on manual posing | [ ] |
+| 20 | AI prop generation | (post-MVP) | [x]² |
+| 21 | Hunyuan3D experiment | Disabling it has zero effect on manual posing | [x] |
 | 22 | Generated humanoids | Character passes deformation QA | [ ] |
 | 23 | UniRig experiment | Failure falls back to manual rigging | [ ] |
-| 24 | Agent API v1 | Semantic primitives only, no arbitrary Blender Python | [ ] |
-| 25 | Agent snapshot/undo | One op restores previous state | [ ] |
+| 24 | Agent API v1 | Semantic primitives only, no arbitrary Blender Python | [x] |
+| 25 | Agent snapshot/undo | One op restores previous state | [x] |
 | 26 | Agent pose assist | Accept/Reject/Revert/Edit | [ ] |
 | 27 | Agent animation assist | Works around locked edits | [ ] |
 | 28 | Text-to-motion (MoMask) | Candidate only, manual review before output | [ ] |
@@ -42,16 +42,28 @@ Manual-first order — **do not reverse**. Each phase ends with the completion r
 | 30 | Asset Browser UI | No raw filesystem paths as main UX | [ ] |
 | 31 | Civitai model registry | No blind agent installs | [ ] |
 | 32 | License-aware import | Agent summarizes, human approves | [ ] |
-| 33 | External .blend security | Untrusted; no auto script execution | [ ] |
+| 33 | External .blend security | Untrusted; no auto script execution | [x] |
 | 34 | Optional Blender MCP | Experiment only; not project truth | [ ] |
-| 35 | Project hardening | Missing optional dep disables feature, not app | [ ] |
+| 35 | Project hardening | Missing optional dep disables feature, not app | [x] |
 | 36 | Final acceptance test | Two chars + ring scene, full loop, repair 1 frame | [ ] |
 
 ¹ Verified via a self-generated rigged+textured GLB (zero downloads). The **VRM path**
 (VrmCharacterImporter) is structurally in place but needs the Blender VRM add-on +
 a real VRoid file to fully verify — that's the one bit needing your asset.
 
-## Immediate next step
+² Pipeline (stage→validate→approve→registry) + provider framework done and gated;
+verified with a Blender-authored mesh. The **live Stable Fast 3D / SPAR3D** providers
+are disabled until their models are installed in an isolated env (a GPU download —
+needs your go-ahead).
 
-Install **Blender 5.2 LTS** (only blocking dependency), then start Phase 2 (Asset
-Registry) — Phase 2 needs no Blender, so it can begin in parallel with the install.
+## Status
+
+**Phases 0–21, 24, 25, 33, 35 complete + MVP gate.** All gated on real hardware.
+
+### Remaining, grouped by what they need
+- **Need a GPU model install (your authorization):** 22 generated humanoids, 23 UniRig,
+  28 text-to-motion (MoMask), 29 driving video (pose extraction). Frameworks/capability
+  flags already exist; only the models are missing.
+- **Buildable now, no downloads:** 26/27 agent pose+animation assist (heuristic first),
+  30 asset browser UI (web UI over the registry), 31 Civitai registry (network API),
+  32 license-aware import, 34 optional Blender MCP, 36 final acceptance test.

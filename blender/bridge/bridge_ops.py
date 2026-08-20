@@ -119,6 +119,18 @@ def op_importModel(cmd):
     return {"objects": [o.name for o in bpy.context.selected_objects]}
 
 
+def op_meshStats(cmd):
+    """Import a mesh and report geometry stats — mesh validation for generated assets."""
+    before = set(bpy.data.objects.keys())
+    op_importModel({"path": cmd["path"]})
+    new = [o for name, o in bpy.data.objects.items()
+           if name not in before and o.type == "MESH"]
+    verts = sum(len(o.data.vertices) for o in new)
+    faces = sum(len(o.data.polygons) for o in new)
+    return {"meshes": len(new), "verts": verts, "faces": faces,
+            "hasGeometry": verts > 0 and faces > 0}
+
+
 def op_setBoneRotation(cmd):
     """Rotate a pose bone (radians, XYZ euler) on an armature object."""
     arm = _obj(cmd["armature"])
