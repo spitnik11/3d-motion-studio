@@ -35,7 +35,8 @@ def export_posebundle(bridge, *, blend_in: str, bundle_dir: str, frames,
 
     actors: [{"name": armature, "index": 1}, ...]. Returns the manifest dict.
     """
-    bundle = Path(bundle_dir)
+    # Absolute: Blender runs with a different cwd, so relative pass paths would misfire.
+    bundle = Path(bundle_dir).resolve()
     bundle.mkdir(parents=True, exist_ok=True)
 
     cmds = []
