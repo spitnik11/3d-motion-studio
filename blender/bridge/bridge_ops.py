@@ -108,6 +108,21 @@ def op_listBones(cmd):
     return {"armature": cmd["armature"], "bones": [b.name for b in arm.data.bones]}
 
 
+def op_armatureGraph(cmd):
+    """Rest-pose skeleton graph in world space: name, parent, head, tail per bone."""
+    arm = _obj(cmd["armature"])
+    mw = arm.matrix_world
+    bones = []
+    for b in arm.data.bones:
+        bones.append({
+            "name": b.name,
+            "parent": b.parent.name if b.parent else None,
+            "head": list(mw @ b.head_local),
+            "tail": list(mw @ b.tail_local),
+        })
+    return {"armature": cmd["armature"], "bones": bones}
+
+
 def op_importModel(cmd):
     path = cmd["path"]
     lower = path.lower()
@@ -159,6 +174,24 @@ def op_meshStats(cmd):
     faces = sum(len(o.data.polygons) for o in new)
     return {"meshes": len(new), "verts": verts, "faces": faces,
             "hasGeometry": verts > 0 and faces > 0}
+
+
+def op_importAndPlace(cmd):
+    """Import a model and place its new objects at a location/scale (returns their names)."""
+    before = set(bpy.data.objects.keys())
+    op_importModel({"path": cmd["path"]})
+    new = [o for name, o in bpy.data.objects.items() if name not in before]
+    loc = tuple(cmd.get("location", (0, 0, 0)))
+    s = cmd.get("scale", 1.0)
+    # move roots (objects whose parent isn't also new) so children follow
+    new_set = set(new)
+    for o in new:
+        if o.parent not in new_set:
+            o.location = (o.location[0] + loc[0], o.location[1] + loc[1], o.location[2] + loc[2])
+            o.scale = (o.scale[0] * s, o.scale[1] * s, o.scale[2] * s)
+    if cmd.get("name") and new:
+        new[0].name = cmd["name"]
+    return {"objects": [o.name for o in new]}
 
 
 def op_setBoneRotation(cmd):
@@ -518,6 +551,19 @@ def op_countKeyframes(cmd):
     fcurves = list(_action_fcurves(ad.action))
     n = sum(len(fc.keyframe_points) for fc in fcurves)
     return {"keyframes": n, "fcurves": len(fcurves)}
+
+
+def op_bindMeshToArmature(cmd):
+    """Skin a mesh to an armature with Blender automatic weights (fills UniRig's
+    deferred skinning stage so a generated character deforms when posed)."""
+    mesh = _obj(cmd["mesh"])
+    arm = _obj(cmd["armature"])
+    bpy.ops.object.select_all(action="DESELECT")
+    mesh.select_set(True)
+    arm.select_set(True)
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+    return {"mesh": mesh.name, "armature": arm.name}
 
 
 def op_addBodyMesh(cmd):

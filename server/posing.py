@@ -23,12 +23,13 @@ Pose = dict  # {"bones": {canonical: {"euler":[...], "location":[...]?}}, "meta"
 
 def apply_pose_commands(pose: Pose, armature: str, family: str,
                         *, frame: int | None = None, keyframe: bool = False,
-                        locks: set[str] | None = None) -> list[dict]:
+                        locks: set[str] | None = None, mapping: dict | None = None) -> list[dict]:
     """Bridge command list that applies `pose` to `armature`.
 
     Locked canonical bones are skipped entirely — automation cannot move them.
+    Pass `mapping` (from calibrate_skeleton) to drive a calibrated generated rig.
     """
-    rig = SemanticRig(family)
+    rig = SemanticRig(family, mapping=mapping)
     locks = locks or set()
     cmds: list[dict] = []
     if frame is not None:

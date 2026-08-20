@@ -216,9 +216,17 @@ FAMILIES = {
 
 
 class SemanticRig:
-    """Binds a rig family to an armature and translates canonical ↔ family names."""
+    """Binds a rig family to an armature and translates canonical ↔ family names.
 
-    def __init__(self, family: str):
+    Pass `mapping` (e.g. from calibrate_skeleton) to use a per-character calibrated
+    map instead of a named family.
+    """
+
+    def __init__(self, family: str, mapping: dict | None = None):
+        if mapping is not None:
+            self.family = family
+            self.map = mapping
+            return
         if family not in FAMILIES:
             raise ValueError(f"unknown rig family {family!r}; known: {sorted(FAMILIES)}")
         self.family = family
