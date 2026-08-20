@@ -8,8 +8,16 @@ Audited 2026-08-19 on the RTX 5070 (Blackwell, **sm_120**), torch 2.13.0+cu130, 
 
 | Feature | Env | Status |
 |---|---|---|
+| **Stable Fast 3D** image→3D (Phase 20) | `Z:/ai-envs/stable-fast-3d` (py3.13, torch 2.13+cu130) | **LIVE on the 5070** — real textured `mesh.glb` (~3.7k verts) from an image in ~3s, peak 6.2 GB VRAM. Full pipeline generate→stage→validate→approve→registry. Test: `tests/test_stable_fast_3d.py`. Weights (5.5 GB) on `Z:/ai-models/hf`. |
 | **Driving-video pose extraction** (Phase 29) | `Z:/ai-envs/driving-video` (mediapipe 0.10.14) | **Working** — video/image → canonical joints; enabled via `config/local.json`. Test: `tests/test_driving_video.py`. |
 | **Real character import** (VRM + GLB) | Blender VRM add-on v4.5.0 | **Working** — CC0 VRoid VRM + CC-BY Khronos GLB import; `vroid` SemanticRig family. Test: `tests/test_real_assets.py`. |
+
+### The compile recipe that cracked it (RTX 5070 / sm_120)
+VS Build Tools + CUDA 13.3 installed. Build CUDA extensions with:
+`export CL="/Zc:preprocessor /std:c++17"` + `CUDA_HOME=.../v13.3` +
+`pip install --no-build-isolation ./texture_baker ./uv_unwrapper`. Env is **py3.13**;
+deps relaxed to cp313 wheels (numpy 2.2 / transformers 4.46 / gpytoolbox 0.3.7). HF
+weights: user `huggingface-cli login` (token global), download with `HF_HUB_CACHE=Z:/ai-models/hf`.
 
 ## ⛔ Blocked heavy generators (cloned, not runnable here)
 
@@ -18,8 +26,8 @@ gracefully (disabled → refuse, never crash), so the app is unaffected.
 
 | Repo | Blocker(s) | To unblock |
 |---|---|---|
-| **stable-fast-3d** (Phase 20 live) | ① weights **gated on HF** (needs *your* HF token + license accept) ② compiles `texture_baker`/`uv_unwrapper` CUDA ext | your `huggingface-cli login` token **+** install VS Build Tools + CUDA Toolkit 13 |
-| **stable-point-aware-3d / SPAR3D** | same gated weights + same compile + AlphaCLIP | same as above |
+| ~~stable-fast-3d~~ | **DONE — now LIVE** (see above) | ✅ |
+| **stable-point-aware-3d / SPAR3D** | same env recipe works now; still needs AlphaCLIP (`git+`) + its gated weights (accepted) | one more env build (same recipe) + AlphaCLIP install — high chance now |
 | **UniRig** (Phase 23) | `flash_attn` + `spconv` + `torch_scatter/cluster` all need compile; no cu130 wheels; `bpy==4.2` conflicts w/ Blender 5.2 | build tools + a torch-geometric build matched to cu130 (may need source builds) |
 | **momask-codes** (Phase 28) | pins **torch 1.12.0+cu113** → no Blackwell kernels; ancient numpy/matplotlib pins | port to torch ≥2.7; CPU-only fallback possible but slow |
 | **HY-Motion-1.0** (Phase 28) | pins **torch 2.5.1** → no sm_120 kernels; needs Autodesk `fbxsdkpy` | bump to torch ≥2.7/cu128 + FBX SDK |
